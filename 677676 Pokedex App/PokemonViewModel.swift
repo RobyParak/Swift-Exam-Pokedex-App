@@ -5,14 +5,45 @@
 //  Created by admin on 10/7/24.
 //
 
+import Combine
 import SwiftUI
 
-struct PokemonViewModel: View {
+class PokemonViewModel: ObservableObject {
+    @Published var pokemonList: [PokemonModel] = []
+    private var cancellable: AnyCancellable?
+    
+    func fetchPokemon() {
+        cancellable = PokemonService.shared.fetchPokemon()
+            .replaceError(with: [])
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.pokemonList, on: self)
+    }
+}
+
+struct PokemonListView: View {
+    @StateObject private var viewModel = PokemonViewModel()
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        List(viewModel.pokemonList) { pokemon in
+            HStack {
+                AsyncImage(url: URL(string: pokemon.imageUrl)) { image in
+                    image.resizable()
+                         .frame(width: 50, height: 50)
+                } placeholder: {
+                    ProgressView()
+                }
+                
+                Text(pokemon.name)
+                    .font(.headline)
+            }
+        }
+        .onAppear {
+            viewModel.fetchPokemon()
+        }
     }
 }
 
 #Preview {
-    PokemonViewModel()
+    PokemonListView()
 }
+

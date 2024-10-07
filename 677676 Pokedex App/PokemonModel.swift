@@ -6,3 +6,12 @@
 //
 
 import Foundation
+
+import Foundation
+
+struct PokemonModel: Identifiable {
+    let id: Int
+    let name: String
+    let type: String
+    let imageUrl: String
+}
