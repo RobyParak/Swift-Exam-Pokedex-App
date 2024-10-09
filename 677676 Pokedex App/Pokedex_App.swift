@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct _77676_Pokedex_AppApp: App {
+struct Pokedex_App: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
