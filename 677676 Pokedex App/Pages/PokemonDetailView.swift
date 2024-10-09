@@ -27,10 +27,10 @@ struct PokemonDetailView: View {
                 .font(.largeTitle)
                 .padding()
 
-            Text("Type: \(pokemon.type)")
-                .font(.title2)
-                .foregroundColor(.gray)
-                .padding(.bottom)
+//            Text("Type: \(pokemon.type)")
+//                .font(.title2)
+//                .foregroundColor(.gray)
+//                .padding(.bottom)
 
             Spacer()
         }
@@ -54,7 +54,7 @@ struct PokemonDetailView: View {
 
 #Preview {
     NavigationView {
-        PokemonDetailView(pokemon: PokemonModel(id: 1, name: "Bulbasaur", type: "Grass"))
+        PokemonDetailView(pokemon: PokemonModel(id: 1, name: "Bulbasaur"))
             .environmentObject(PokemonFavourites.shared)
     }
 }

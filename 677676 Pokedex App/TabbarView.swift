@@ -9,15 +9,17 @@ import SwiftUI
 
 struct TabbarView: View {
     var body: some View {
-        TabbarView{
+        TabView {
             MainPokemonPage(vm: .init())
                 .tabItem {
-                    Label( "Home", systemImage: "house")}
-            FavouritePokemonPage
+                    Label( "Home", systemImage: "house")
+                }
+            FavouritePokemonPage()
+                .tabItem {
+                    Label("Favourites", systemImage: "heart")                }
         }
     }
 }
-
 #Preview {
     TabbarView()
 }

@@ -11,6 +11,7 @@ import Combine
 extension MainPokemonPage {
     @MainActor
     final class PokemonViewModel: ObservableObject{
+        
         @Published var search: String = ""
         private var cancellables: [AnyCancellable] = []
         
