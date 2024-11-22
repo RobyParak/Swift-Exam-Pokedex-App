@@ -2,9 +2,7 @@
 //  SwiftUIView.swift
 //  677676 Pokedex App
 //
-//  Created by admin on 10/7/24.
 //
-
 import SwiftUI
 
 struct TabbarView: View {
@@ -12,14 +10,19 @@ struct TabbarView: View {
         TabView {
             MainPokemonPage(vm: .init())
                 .tabItem {
-                    Label( "Home", systemImage: "house")
+                    Label("Home", systemImage: "house")
                 }
             FavouritePokemonPage()
                 .tabItem {
-                    Label("Favourites", systemImage: "heart")                }
+                    Label("Favourites", systemImage: "heart")
+                }
         }
     }
 }
+
 #Preview {
     TabbarView()
+        .environmentObject(PokemonStore())
+        .environmentObject(PokemonFavourites.shared)
 }
+
