@@ -2,7 +2,6 @@
 //  PokemonService.swift
 //  677676 Pokedex App
 //
-//  Created by admin on 10/7/24.
 //
 
 import Foundation
@@ -35,7 +34,7 @@ class PokemonStore: ObservableObject {
         Future { promise in
             Task {
                 do {
-                    // Limit the request to the first 151 Pokémon
+                    // Limit the request to the first 151 Pokémon because those are the best
                     guard let url = URL(string: "https://pokeapi.co/api/v2/pokemon?limit=151") else {
                         throw NSError(domain: "Invalid URL", code: -1, userInfo: nil)
                     }

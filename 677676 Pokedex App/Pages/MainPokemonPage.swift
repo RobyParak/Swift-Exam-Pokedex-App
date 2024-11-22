@@ -2,17 +2,17 @@
 //  MainPokemonPage.swift
 //  677676 Pokedex App
 //
-//  Created by admin on 10/7/24.
 //
-
 import SwiftUI
 
-struct MainPokemonPage:  View {
-    
+struct MainPokemonPage: View {
     @EnvironmentObject var pokemonStore: PokemonStore
-    @StateObject var vm : PokemonViewModel
-        
-        var body: some View {
+    @EnvironmentObject var pokemonFavourites : PokemonFavourites
+    
+    @StateObject var vm: PokemonViewModel
+    
+    var body: some View {
+        NavigationView {
             ScrollView {
                 VStack {
                     TextField("Search", text: $vm.search)
@@ -22,12 +22,12 @@ struct MainPokemonPage:  View {
                         .cornerRadius(8)
                         .padding(.horizontal)
                     
-                    Text("Gen 1 Pokemons")
+                    Text("Gen 1 Pokémons")
                         .font(.largeTitle)
                         .padding(.all, 14)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
-                switch pokemonStore.pokemons {
+                    switch pokemonStore.pokemons {
                     case .success(let pokemons):
                         let filteredPokemons = pokemons.filter {
                             vm.search.isEmpty || $0.name.lowercased().contains(vm.search.lowercased())
@@ -40,7 +40,9 @@ struct MainPokemonPage:  View {
                         } else {
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
                                 ForEach(filteredPokemons, id: \.self) { pokemon in
-                                    PokemonCell(pokemon: pokemon)
+                                    NavigationLink(destination: PokemonDetailView(pokemon: pokemon)) {
+                                        PokemonCell(pokemon: pokemon)
+                                    }
                                 }
                             }
                             .padding()
@@ -53,11 +55,13 @@ struct MainPokemonPage:  View {
                     }
                 }
             }
+            .navigationTitle("Pokédex")
         }
     }
+}
 
 #Preview {
     MainPokemonPage(vm: .init())
         .environmentObject(PokemonStore())
+        .environmentObject(PokemonFavourites.shared)
 }
-
