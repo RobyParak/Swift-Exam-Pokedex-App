@@ -39,7 +39,7 @@ struct MainPokemonPage: View {
                         loadingStateView
                     } else {
                         switch vm.pokemons {
-                        case .success(let pokemons):
+                        case .success(_):
                             if vm.filteredPokemons.isEmpty {
                                 Text("No Pokémon found!")
                                     .font(.headline)
@@ -72,7 +72,7 @@ struct MainPokemonPage: View {
     private var loadingStateView: some View {
         VStack {
             ProgressView("Loading Pokémon...")
-                .progressViewStyle(CircularProgressViewStyle(tint: Color("AccentColor")))
+                .progressViewStyle(CircularProgressViewStyle(tint: Color(.blue)))
                 .scaleEffect(1.5)
             Spacer().frame(height: 20)
             Text("Please wait while we fetch details.")

@@ -3,72 +3,46 @@
 //  677676 Pokedex App
 //
 //
-import Combine
 import Foundation
+import Combine
 
 class PokemonViewModel: ObservableObject {
-    @Published var selectedPokemon: PokemonModel?
-    @Published var isLoading: Bool = false
+    @Published var pokemonDetails: PokemonModel?
+    @Published var isLoading = false
     @Published var errorMessage: String?
-
+    
+    private let pokemonStore: PokemonStore
     private var cancellables = Set<AnyCancellable>()
-
-    private let pokemon: PokemonModel
-
-    init(pokemon: PokemonModel) {
-        self.pokemon = pokemon
-        fetchPokemonDetails(for: pokemon)
+    
+    init(pokemonStore: PokemonStore = PokemonStore()) {
+        self.pokemonStore = pokemonStore
     }
-
-    func fetchPokemonDetails(for pokemon: PokemonModel) {
+    
+    func fetchDetails(for id: Int) {
         isLoading = true
         errorMessage = nil
-
-        let urlString = "https://pokeapi.co/api/v2/pokemon/\(pokemon.id)"
-        guard let url = URL(string: urlString) else {
-            errorMessage = "Invalid URL."
-            isLoading = false
-            return
-        }
-
-        URLSession.shared.dataTaskPublisher(for: url)
-            .tryMap { output -> Data in
-                guard let response = output.response as? HTTPURLResponse,
-                      response.statusCode == 200 else {
-                    throw URLError(.badServerResponse)
-                }
-                return output.data
-            }
-            .decode(type: PokemonDetailResponse.self, decoder: JSONDecoder())
-            .map { detailResponse in
-                var updatedPokemon = pokemon
-                updatedPokemon.types = detailResponse.types.map { $0.type.name }
-                updatedPokemon.abilities = detailResponse.abilities.map { $0.ability.name }
-                updatedPokemon.height = Double(detailResponse.height) / 10.0
-                updatedPokemon.weight = Double(detailResponse.weight) / 10.0
-                updatedPokemon.baseExperience = detailResponse.baseExperience
-                return updatedPokemon
-            }
+        pokemonDetails = nil
+        
+        pokemonStore.fetchPokemonDetailsbyId(id: id)
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { [weak self] completion in
-                switch completion {
-                case .failure(let error):
-                    if let urlError = error as? URLError {
-                        self?.errorMessage = "Network error: \(urlError.localizedDescription)"
-                    } else if let decodingError = error as? DecodingError {
-                        self?.errorMessage = "Data decoding error: \(decodingError.localizedDescription)"
-                    } else {
-                        self?.errorMessage = "Unknown error: \(error.localizedDescription)"
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    self?.isLoading = false
+                    if case .failure(let error) = completion {
+                        self?.errorMessage = error.localizedDescription
+                        print("Error fetching Pokémon details: \(error)")
                     }
-                case .finished:
-                    break
+                },
+                receiveValue: { [weak self] details in
+                    self?.pokemonDetails = details
+                    print("Successfully fetched Pokémon: \(details.name)")
                 }
-                self?.isLoading = false
-            }, receiveValue: { [weak self] updatedPokemon in
-                self?.selectedPokemon = updatedPokemon
-            })
+            )
             .store(in: &cancellables)
     }
+    
+    func clearDetails() {
+        pokemonDetails = nil
+        errorMessage = nil
+    }
 }
-
-

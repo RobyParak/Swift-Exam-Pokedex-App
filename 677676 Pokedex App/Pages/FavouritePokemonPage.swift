@@ -24,7 +24,7 @@ struct FavouritePokemonPage: View {
                     case .success(let allPokemons):
                         let favoritePokemons = pokemonFavourites.favoriteIDs.compactMap { id in
                             allPokemons.first { $0.id == id }
-                        }
+                        }.sorted { $0.id < $1.id } // Sort by ID in ascending order
 
                         if favoritePokemons.isEmpty {
                             Text("No favorite Pokémon available.")
@@ -50,10 +50,3 @@ struct FavouritePokemonPage: View {
         .navigationTitle("Favourites")
     }
 }
-
-#Preview {
-    FavouritePokemonPage()
-        .environmentObject(PokemonFavourites.shared)
-        .environmentObject(PokemonStore())
-}
-

@@ -33,7 +33,7 @@ struct PokemonModel: Hashable, Codable {
     }
 
     // Helper function to extract Pokémon ID from the URL
-    private static func extractId(from url: String) -> Int? {
+    static func extractId(from url: String) -> Int? {
         url.split(separator: "/").last.flatMap { Int($0) }
     }
 }
