@@ -6,62 +6,107 @@
 import SwiftUI
 
 struct MainPokemonPage: View {
-    @EnvironmentObject var pokemonStore: PokemonStore
-    @EnvironmentObject var pokemonFavourites : PokemonFavourites
-    
-    @StateObject var vm: PokemonViewModel
-    
+    @EnvironmentObject var pokemonFavourites: PokemonFavourites
+    @StateObject var vm: MainPokemonPageViewModel
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack {
-                    TextField("Search", text: $vm.search)
-                        .padding()
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .background(Color.teal)
-                        .cornerRadius(8)
-                        .padding(.horizontal)
-                    
-                    Text("Gen 1 Pokémons")
-                        .font(.largeTitle)
-                        .padding(.all, 14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    
-                    switch pokemonStore.pokemons {
-                    case .success(let pokemons):
-                        let filteredPokemons = pokemons.filter {
-                            vm.search.isEmpty || $0.name.lowercased().contains(vm.search.lowercased())
-                        }
-                        
-                        if filteredPokemons.isEmpty {
-                            Text("No Pokémon found!")
-                                .font(.headline)
-                                .padding(.top, 20)
+                    HStack {
+                        if vm.search.isEmpty {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.gray)
+                                .padding(.leading, 18)
                         } else {
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
-                                ForEach(filteredPokemons, id: \.self) { pokemon in
-                                    NavigationLink(destination: PokemonDetailView(pokemon: pokemon)) {
-                                        PokemonCell(pokemon: pokemon)
+                            Button(action: {
+                                vm.search = "" // Clear search text when clicked
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.leading, 18)
+                        }
+
+                        TextField("Gen 1 Pokémon only", text: $vm.search)
+                            .padding(.trailing, 12)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    }
+                    .padding(.top)
+
+                    // Handle different states (Loading, Error, Success)
+                    if vm.isLoading {
+                        loadingStateView
+                    } else {
+                        switch vm.pokemons {
+                        case .success(let pokemons):
+                            if vm.filteredPokemons.isEmpty {
+                                Text("No Pokémon found!")
+                                    .font(.headline)
+                                    .padding(.top, 20)
+                            } else {
+                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
+                                    ForEach(vm.filteredPokemons, id: \.self) { pokemon in
+                                        NavigationLink(destination: PokemonDetailView(pokemon: pokemon)) {
+                                            PokemonCell(pokemon: pokemon)
+                                        }
                                     }
                                 }
+                                .padding()
                             }
-                            .padding()
+
+                        case .failure(let error):
+                            errorStateView(errorMessage: error.localizedDescription)
                         }
-                        
-                    case .failure:
-                        Text("Failed to load Pokémon.")
-                            .foregroundColor(.red)
-                            .padding(.top, 20)
                     }
                 }
             }
-            .navigationTitle("Pokédex")
+            .refreshable {
+                await vm.refreshData()
+            }
+            .navigationTitle("Kanto Pokémon")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
-}
 
-#Preview {
-    MainPokemonPage(vm: .init())
-        .environmentObject(PokemonStore())
-        .environmentObject(PokemonFavourites.shared)
+    private var loadingStateView: some View {
+        VStack {
+            ProgressView("Loading Pokémon...")
+                .progressViewStyle(CircularProgressViewStyle(tint: Color("AccentColor")))
+                .scaleEffect(1.5)
+            Spacer().frame(height: 20)
+            Text("Please wait while we fetch details.")
+                .font(.custom("Poppins-Regular", size: 14))
+                .foregroundColor(.gray)
+        }
+    }
+
+    private func errorStateView(errorMessage: String) -> some View {
+        VStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.red)
+                .font(.largeTitle)
+                .padding()
+            Text("Oops! Something went wrong.")
+                .font(.headline)
+                .foregroundColor(.red)
+            Text(errorMessage)
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding()
+            Button(action: {
+                Task {
+                    await vm.refreshData()
+                }
+            }) {
+                Text("Retry")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+            }
+        }
+    }
 }

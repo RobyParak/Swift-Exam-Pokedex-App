@@ -8,7 +8,7 @@ import SwiftUI
 struct TabbarView: View {
     var body: some View {
         TabView {
-            MainPokemonPage(vm: .init())
+            MainPokemonPage(vm: MainPokemonPageViewModel(pokemonStore: PokemonStore()))
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
@@ -19,10 +19,3 @@ struct TabbarView: View {
         }
     }
 }
-
-#Preview {
-    TabbarView()
-        .environmentObject(PokemonStore())
-        .environmentObject(PokemonFavourites.shared)
-}
-
