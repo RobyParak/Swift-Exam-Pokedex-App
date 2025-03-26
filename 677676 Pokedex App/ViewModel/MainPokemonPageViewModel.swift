@@ -9,33 +9,31 @@ class MainPokemonPageViewModel: ObservableObject {
     @Published var search: String = ""
     @Published var pokemons: Result<[PokemonModel], Error> = .failure(NSError(domain: "", code: 0, userInfo: nil))
     @Published var isLoading: Bool = false
-
+    
     private let pokemonStore: PokemonStore
     private var cancellables = Set<AnyCancellable>()
     
-    init(pokemonStore: PokemonStore) {
+    init(pokemonStore: PokemonStore = PokemonStore()) {
         self.pokemonStore = pokemonStore
+        
+        pokemonStore.$pokemons
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] result in
+                self?.pokemons = result
+                self?.isLoading = false
+            }
+            .store(in: &cancellables)
+        
         fetchPokemons()
     }
     
-    func refreshData() async {
+    func refreshData() {
         fetchPokemons()
     }
     
     private func fetchPokemons() {
         isLoading = true
-        pokemonStore.fetchPokemon()
-            .sink(receiveCompletion: { completion in
-                self.isLoading = false // using this to track the loading state
-                if case .failure(let error) = completion {
-                    self.pokemons = .failure(error)
-                    print("Error fetching Pokémon: \(error)")
-                }
-            }, receiveValue: { pokemons in
-                self.pokemons = .success(pokemons)
-                print("Fetched Pokémon: \(pokemons.count) found.")
-            })
-            .store(in: &cancellables)
+        pokemonStore.fetchPokemonData()
     }
     
     var filteredPokemons: [PokemonModel] {

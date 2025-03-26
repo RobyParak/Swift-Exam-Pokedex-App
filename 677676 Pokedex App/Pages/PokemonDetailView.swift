@@ -2,36 +2,34 @@
 //  PokemonDetailView.swift
 //  677676 Pokedex App
 //
-//  Created by admin on 10/7/24.
-//
 import SwiftUI
 
 struct PokemonDetailView: View {
     let pokemon: PokemonModel
-        @StateObject private var viewModel: PokemonViewModel
-        
-        init(pokemon: PokemonModel) {
-            self.pokemon = pokemon
-            _viewModel = StateObject(wrappedValue: PokemonViewModel(pokemon: pokemon))
-        }
+    @StateObject private var viewModel: PokemonViewModel
+    
+    init(pokemon: PokemonModel) {
+        self.pokemon = pokemon
+        _viewModel = StateObject(wrappedValue: PokemonViewModel())
+    }
     
     var body: some View {
         ZStack {
-            Color("BackgroundColor")
+            Color(.white)
                 .edgesIgnoringSafeArea(.all)
             
             if viewModel.isLoading {
                 loadingStateView
             } else if let errorMessage = viewModel.errorMessage {
                 errorStateView(errorMessage: errorMessage)
-            } else if let details = viewModel.selectedPokemon {
+            } else if let details = viewModel.pokemonDetails {
                 contentView(details: details)
             } else {
                 noDataStateView
             }
         }
         .onAppear {
-            viewModel.fetchPokemonDetails(for: pokemon)
+            viewModel.fetchDetails(for: pokemon.id)
         }
         .navigationBarBackButtonHidden(false)
     }
@@ -39,7 +37,7 @@ struct PokemonDetailView: View {
     private var loadingStateView: some View {
         VStack {
             ProgressView("Loading Pokémon...")
-                .progressViewStyle(CircularProgressViewStyle(tint: Color("AccentColor")))
+                .progressViewStyle(CircularProgressViewStyle(tint: Color(.systemBlue)))
                 .scaleEffect(1.5)
             Spacer().frame(height: 20)
             Text("Please wait while we fetch details.")
@@ -63,7 +61,7 @@ struct PokemonDetailView: View {
                 .multilineTextAlignment(.center)
                 .padding()
             Button(action: {
-                viewModel.fetchPokemonDetails(for: pokemon)
+                viewModel.fetchDetails(for: pokemon.id)  // Corrected the fetch call to use the Pokémon id
             }) {
                 Text("Retry")
                     .font(.headline)
