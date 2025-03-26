@@ -46,11 +46,6 @@ struct PokemonCell: View {
         .padding(.all, 12)
         .background(Color(red: 0.9647, green: 0.9647, blue: 1.0))
         .cornerRadius(10)
-        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2) 
+        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
     }
 }
-
-#Preview {
-    PokemonCell(pokemon: PokemonModel(id: 1, name: "Bulbasaur"))
-}
-

@@ -8,7 +8,8 @@ import Combine
 class MainPokemonPageViewModel: ObservableObject {
     @Published var search: String = ""
     @Published var pokemons: Result<[PokemonModel], Error> = .failure(NSError(domain: "", code: 0, userInfo: nil))
-    
+    @Published var isLoading: Bool = false
+
     private let pokemonStore: PokemonStore
     private var cancellables = Set<AnyCancellable>()
     
@@ -18,21 +19,14 @@ class MainPokemonPageViewModel: ObservableObject {
     }
     
     func refreshData() async {
-        do {
-            let newPokemons = try await fetchPokemonsAsync() // Fetch Pokémon asynchronously
-            DispatchQueue.main.async {
-                self.pokemons = .success(newPokemons)
-            }
-        } catch {
-            DispatchQueue.main.async {
-                self.pokemons = .failure(error)
-            }
-        }
+        fetchPokemons()
     }
     
     private func fetchPokemons() {
+        isLoading = true
         pokemonStore.fetchPokemon()
             .sink(receiveCompletion: { completion in
+                self.isLoading = false // using this to track the loading state
                 if case .failure(let error) = completion {
                     self.pokemons = .failure(error)
                     print("Error fetching Pokémon: \(error)")
@@ -42,20 +36,6 @@ class MainPokemonPageViewModel: ObservableObject {
                 print("Fetched Pokémon: \(pokemons.count) found.")
             })
             .store(in: &cancellables)
-    }
-    
-    private func fetchPokemonsAsync() async throws -> [PokemonModel] {
-        return try await withCheckedThrowingContinuation { continuation in
-            pokemonStore.fetchPokemon()
-                .sink(receiveCompletion: { completion in
-                    if case .failure(let error) = completion {
-                        continuation.resume(throwing: error)
-                    }
-                }, receiveValue: { pokemons in
-                    continuation.resume(returning: pokemons)
-                })
-                .store(in: &cancellables)
-        }
     }
     
     var filteredPokemons: [PokemonModel] {
