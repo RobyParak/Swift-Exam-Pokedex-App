@@ -10,7 +10,7 @@ struct PokemonModel: Hashable, Codable {
     let name: String
     let imageUrl: String
     var types: [String] = []
-    var abilities: [String] = []
+    let abilities: [String]
     var height: Double?
     var weight: Double?
     var baseExperience: Int?
