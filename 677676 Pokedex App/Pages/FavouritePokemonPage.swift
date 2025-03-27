@@ -9,7 +9,6 @@ struct FavouritePokemonPage: View {
     @EnvironmentObject var pokemonStore: PokemonStore
     
     var body: some View {
-        NavigationView {
             ScrollView {
                 VStack {
                     if pokemonFavourites.favoriteIDs.isEmpty {
@@ -18,10 +17,12 @@ struct FavouritePokemonPage: View {
                         contentView
                     }
                 }
+                .refreshable {
+                    await pokemonStore.fetchPokemon()
+                }
             }
             .navigationTitle("Favourites")
             .navigationBarTitleDisplayMode(.inline)
-        }
     }
     
     @ViewBuilder

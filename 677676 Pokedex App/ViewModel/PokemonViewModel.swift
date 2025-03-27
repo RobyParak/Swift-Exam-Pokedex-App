@@ -52,8 +52,9 @@ class PokemonViewModel: ObservableObject {
         } else {
             PokemonFavourites.shared.add(pokemon.id)
         }
-        // Force UI update
-        objectWillChange.send()
+        if let currentDetails = pokemonDetails, currentDetails.id == pokemon.id {
+            objectWillChange.send()
+        }
     }
     
     func isFavorite(pokemon: PokemonModel) -> Bool {

@@ -10,6 +10,7 @@ class MainPokemonPageViewModel: ObservableObject {
     @Published var pokemons: Result<[PokemonModel], Error> = .failure(NSError(domain: "", code: 0, userInfo: nil))
     @Published var isLoading: Bool = false
     
+    private var pokemonViewModels: [Int: PokemonViewModel] = [:]
     private let pokemonStore: PokemonStore
     private var cancellables = Set<AnyCancellable>()
     
@@ -46,5 +47,17 @@ class MainPokemonPageViewModel: ObservableObject {
         }
         print("Filtered Pokémon: \(filtered.count) matching '\(search)'.")
         return filtered
+    }
+    
+
+    func pokemonViewModel(for pokemon: PokemonModel) -> PokemonViewModel {
+        if let existing = pokemonViewModels[pokemon.id] {
+            existing.pokemonDetails = pokemon
+            return existing
+        }
+        let newVM = PokemonViewModel()
+        newVM.pokemonDetails = pokemon
+        pokemonViewModels[pokemon.id] = newVM
+        return newVM
     }
 }

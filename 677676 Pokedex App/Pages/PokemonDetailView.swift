@@ -6,41 +6,176 @@ import SwiftUI
 
 struct PokemonDetailView: View {
     let pokemon: PokemonModel
-    @StateObject private var viewModel: PokemonViewModel
+    @StateObject var viewModel: PokemonViewModel
     @Environment(\.presentationMode) var presentationMode
-    
-    init(pokemon: PokemonModel) {
-        self.pokemon = pokemon
-        _viewModel = StateObject(wrappedValue: PokemonViewModel())
-    }
     
     var body: some View {
         ZStack {
-            Color(.white)
-                .edgesIgnoringSafeArea(.all)
+            Color(.systemBackground)
+                .ignoresSafeArea()
             
-            if viewModel.isLoading {
-                loadingStateView
-            } else if let errorMessage = viewModel.errorMessage {
-                errorStateView(errorMessage: errorMessage)
-            } else if let details = viewModel.pokemonDetails {
-                contentView(details: details)
-            } else {
-                noDataStateView
+            Group {
+                if viewModel.isLoading {
+                    loadingStateView
+                } else if let errorMessage = viewModel.errorMessage {
+                    errorStateView(errorMessage: errorMessage)
+                } else if let details = viewModel.pokemonDetails {
+                    contentView(details: details)
+                } else {
+                    noDataStateView
+                }
             }
         }
-        .onAppear {
-            viewModel.fetchDetails(for: pokemon.id)
+        .task {
+            await viewModel.fetchDetails(for: pokemon.id)
         }
         .navigationBarBackButtonHidden(false)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    private func contentView(details: PokemonModel) -> some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                pokemonImageSection(details: details)
+                nameAndIdSection(details: details)
+                typesSection(details: details)
+                aboutSection(details: details)
+            }
+        }
+    }
+    
+    private func pokemonImageSection(details: PokemonModel) -> some View {
+        ZStack(alignment: .topTrailing) {
+            AsyncImage(url: URL(string: details.imageUrl)) { phase in
+                switch phase {
+                case .success(let image):
+                    image.resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 200, height: 200)
+                        .clipShape(Circle())
+                        .shadow(radius: 5)
+                        .overlay(Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1))
+                case .failure:
+                    Image(systemName: "photo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 200, height: 200)
+                        .foregroundColor(.gray)
+                default:
+                    ProgressView()
+                }
+            }
+            
+            favoriteButton(details: details)
+                .padding(8)
+        }
+    }
+    
+    private func favoriteButton(details: PokemonModel) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                viewModel.toggleFavorite(pokemon: details)
+            }
+        } label: {
+            Image(systemName: viewModel.isFavorite(pokemon: details) ? "heart.fill" : "heart")
+                .font(.system(size: 24))
+                .foregroundColor(viewModel.isFavorite(pokemon: details) ? .red : .gray)
+                .padding(12)
+                .background(Color.white.opacity(0.8))
+                .clipShape(Circle())
+                .shadow(radius: 3)
+        }
+    }
+    
+    private func nameAndIdSection(details: PokemonModel) -> some View {
+        VStack(spacing: 4) {
+            Text(details.name.capitalized)
+                .font(.system(size: 32, weight: .bold))
+                .foregroundColor(.primary)
+            
+            Text("#\(String(format: "%03d", details.id))")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.gray)
+        }
+        .padding()
+    }
+    
+    private func typesSection(details: PokemonModel) -> some View {
+        Group {
+            if !details.types.isEmpty {
+                HStack(spacing: 8) {
+                    ForEach(details.types, id: \.self) { type in
+                        Text(type.capitalized)
+                            .font(.system(size: 14, weight: .medium))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color(typeColor(for: type)))
+                            .foregroundColor(.white)
+                            .cornerRadius(20)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+        }
+    }
+    
+    private func aboutSection(details: PokemonModel) -> some View {
+        VStack(spacing: 16) {
+            Text("About")
+                .font(.headline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+            
+            VStack(spacing: 12) {
+                InfoRow(title: "Name", value: details.name.capitalized)
+                InfoRow(title: "ID", value: "#\(String(format: "%03d", details.id))")
+                InfoRow(title: "Base XP", value: "\(details.baseExperience ?? 0)")
+                InfoRow(title: "Weight", value: "\(formatWeight(details.weight)) kg")
+                InfoRow(title: "Height", value: "\(formatHeight(details.height)) m")
+                InfoRow(title: "Types", value: details.types.map { $0.capitalized }.joined(separator: ", "))
+                InfoRow(title: "Abilities", value: details.abilities.map { $0.capitalized }.joined(separator: ", "))
+            }
+            .padding(.horizontal)
+        }
+        .padding(.vertical)
+    }
+    
+    struct InfoRow: View {
+        let title: String
+        let value: String
+        
+        var body: some View {
+            HStack {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .frame(width: 100, alignment: .leading)
+                
+                Text(value)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Spacer()
+            }
+        }
+    }
+    
+    private func formatWeight(_ weight: Double?) -> String {
+        guard let weight = weight else { return "0.0" }
+        return String(format: "%.1f", weight / 10)
+    }
+
+    private func formatHeight(_ height: Double?) -> String {
+        guard let height = height else { return "0.0" }
+        return String(format: "%.1f", height / 10)
     }
     
     private var loadingStateView: some View {
         VStack {
             ProgressView("Loading Pokémon...")
-                .progressViewStyle(CircularProgressViewStyle(tint: Color(.systemBlue)))
+                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
                 .scaleEffect(1.5)
-            Spacer().frame(height: 20)
+            
             Text("Please wait while we fetch details.")
                 .font(.custom("Poppins-Regular", size: 14))
                 .foregroundColor(.gray)
@@ -53,17 +188,22 @@ struct PokemonDetailView: View {
                 .foregroundColor(.red)
                 .font(.largeTitle)
                 .padding()
+            
             Text("Oops! Something went wrong.")
                 .font(.headline)
                 .foregroundColor(.red)
+            
             Text(errorMessage)
                 .font(.subheadline)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
                 .padding()
-            Button(action: {
-                viewModel.fetchDetails(for: pokemon.id)
-            }) {
+            
+            Button {
+                Task {
+                    await viewModel.fetchDetails(for: pokemon.id)
+                }
+            } label: {
                 Text("Retry")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -75,125 +215,9 @@ struct PokemonDetailView: View {
     }
     
     private var noDataStateView: some View {
-        VStack {
-            Text("No Pokémon data available.")
-                .font(.headline)
-                .foregroundColor(.gray)
-                .padding()
-        }
-    }
-    
-    private func contentView(details: PokemonModel) -> some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Header with image and favorite button
-                ZStack(alignment: .topTrailing) {
-                    AsyncImage(url: URL(string: details.imageUrl)) { image in
-                        image.resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 200, height: 200)
-                            .clipShape(Circle())
-                            .shadow(radius: 5)
-                            .overlay(Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1))
-                    } placeholder: {
-                        ProgressView()
-                    }
-                    
-                    Button(action: {
-                        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
-                            viewModel.toggleFavorite(pokemon: details)
-                        }
-                    }) {
-                        Image(systemName: viewModel.isFavorite(pokemon: details) ? "heart.fill" : "heart")
-                            .font(.system(size: 24))
-                            .foregroundColor(viewModel.isFavorite(pokemon: details) ? .red : .gray)
-                            .padding(12)
-                            .background(Color.white.opacity(0.8))
-                            .clipShape(Circle())
-                            .shadow(radius: 3)
-                    }
-                    .padding(8)
-                }
-                
-                // Name and ID
-                VStack(spacing: 4) {
-                    Text(details.name.capitalized)
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.primary)
-                    
-                    Text("#\(String(format: "%03d", details.id))")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.gray)
-                }
-                
-                // Types
-                if !details.types.isEmpty {
-                    HStack(spacing: 8) {
-                        ForEach(details.types, id: \.self) { type in
-                            Text(type.capitalized)
-                                .font(.system(size: 14, weight: .medium))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color(typeColor(for: type)))
-                                .foregroundColor(.white)
-                                .cornerRadius(20)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                }
-                
-                // Basic info cards
-                HStack(spacing: 16) {
-                    infoCard(title: "Height", value: "\(details.height ?? 0) m", icon: "arrow.up.and.down")
-                    infoCard(title: "Weight", value: "\(details.weight ?? 0) kg", icon: "scalemass")
-                }
-                .padding(.horizontal)
-                
-                // Abilities
-                if !details.abilities.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Abilities")
-                            .font(.headline)
-                        
-                        HStack(spacing: 8) {
-                            ForEach(details.abilities, id: \.self) { ability in
-                                Text(ability.capitalized)
-                                    .font(.subheadline)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(12)
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color.gray.opacity(0.05))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                }
-            }
-            .padding(.vertical)
-        }
-    }
-    
-    // Helper functions for the content view
-    private func infoCard(title: String, value: String, icon: String) -> some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundColor(.blue)
-            Text(title)
-                .font(.system(size: 12))
-                .foregroundColor(.gray)
-            Text(value)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.primary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(12)
-        .background(Color.gray.opacity(0.05))
-        .cornerRadius(12)
+        Text("No Pokémon data available.")
+            .font(.headline)
+            .foregroundColor(.gray)
     }
     
     private func typeColor(for type: String) -> Color {

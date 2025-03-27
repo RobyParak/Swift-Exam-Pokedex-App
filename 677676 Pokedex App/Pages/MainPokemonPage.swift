@@ -10,63 +10,61 @@ struct MainPokemonPage: View {
     @StateObject var vm: MainPokemonPageViewModel
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack {
-                    HStack {
-                        if vm.search.isEmpty {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.gray)
-                                .padding(.leading, 18)
-                        } else {
-                            Button(action: {
-                                vm.search = "" // Clear search text when clicked
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.gray)
-                            }
+        ScrollView {
+            VStack {
+                HStack {
+                    if vm.search.isEmpty {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
                             .padding(.leading, 18)
-                        }
-                        
-                        TextField("Gen 1 Pokémon only", text: $vm.search)
-                            .padding(.trailing, 12)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    .padding(.top)
-                    
-                    // Handle different states (Loading, Error, Success)
-                    if vm.isLoading {
-                        loadingStateView
                     } else {
-                        switch vm.pokemons {
-                        case .success(_):
-                            if vm.filteredPokemons.isEmpty {
-                                Text("No Pokémon found!")
-                                    .font(.headline)
-                                    .padding(.top, 20)
-                            } else {
-                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
-                                    ForEach(vm.filteredPokemons, id: \.self) { pokemon in
-                                        NavigationLink(destination: PokemonDetailView(pokemon: pokemon, viewModel: PokemonViewModel())) {
-                                            PokemonCell(pokemon: pokemon)
-                                        }
+                        Button(action: {
+                            vm.search = "" // Clear search text when clicked
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.leading, 18)
+                    }
+                    
+                    TextField("Gen 1 Pokémon only", text: $vm.search)
+                        .padding(.trailing, 12)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                .padding(.top)
+                
+                // Handle different states (Loading, Error, Success)
+                if vm.isLoading {
+                    loadingStateView
+                } else {
+                    switch vm.pokemons {
+                    case .success(_):
+                        if vm.filteredPokemons.isEmpty {
+                            Text("No Pokémon found!")
+                                .font(.headline)
+                                .padding(.top, 20)
+                        } else {
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
+                                ForEach(vm.filteredPokemons, id: \.self) { pokemon in
+                                    NavigationLink(destination: PokemonDetailView(pokemon: pokemon, viewModel: vm.pokemonViewModel(for: pokemon))) {
+                                        PokemonCell(pokemon: pokemon)
                                     }
                                 }
-                                .padding()
                             }
-                            
-                        case .failure(let error):
-                            errorStateView(errorMessage: error.localizedDescription)
+                            .padding()
                         }
+                        
+                    case .failure(let error):
+                        errorStateView(errorMessage: error.localizedDescription)
                     }
                 }
             }
-            .refreshable {
-                await vm.refreshData()
-            }
-            .navigationTitle("Kanto Pokémon")
-            .navigationBarTitleDisplayMode(.inline)
         }
+        .refreshable {
+            await vm.refreshData()
+        }
+        .navigationTitle("Kanto Pokémon")
+        .navigationBarTitleDisplayMode(.inline)
     }
     
     private var loadingStateView: some View {
