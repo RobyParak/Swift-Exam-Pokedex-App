@@ -45,4 +45,19 @@ class PokemonViewModel: ObservableObject {
         pokemonDetails = nil
         errorMessage = nil
     }
+    
+    func toggleFavorite(pokemon: PokemonModel) {
+        if PokemonFavourites.shared.isFavorite(pokemon.id) {
+            PokemonFavourites.shared.remove(pokemon.id)
+        } else {
+            PokemonFavourites.shared.add(pokemon.id)
+        }
+        if let currentDetails = pokemonDetails, currentDetails.id == pokemon.id {
+            objectWillChange.send()
+        }
+    }
+    
+    func isFavorite(pokemon: PokemonModel) -> Bool {
+        return PokemonFavourites.shared.isFavorite(pokemon.id)
+    }
 }

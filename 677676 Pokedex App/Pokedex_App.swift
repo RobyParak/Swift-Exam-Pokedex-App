@@ -25,7 +25,7 @@ struct SplashScreenWrapperView: View {
     @State private var showSplashScreen = true
     
     var body: some View {
-        ZStack {
+        Group {
             if showSplashScreen {
                 SplashScreenView()
             } else {
@@ -39,7 +39,5 @@ struct SplashScreenWrapperView: View {
                 }
             }
         }
-        .environmentObject(pokemonStore)
-        .environmentObject(pokemonFavourites)
     }
 }
