@@ -11,8 +11,10 @@ struct PokemonDetailsResponse: Codable {
     let weight: Int
     let height: Int
     let types: [PokemonType]
+    let abilities: [PokemonAbility]
     let stats: [PokemonStat]
     let sprites: PokemonSprites
+    let baseExperience: Int?
     
     struct PokemonType: Codable {
         let slot: Int
@@ -20,6 +22,22 @@ struct PokemonDetailsResponse: Codable {
     }
     
     struct TypeName: Codable {
+        let name: String
+    }
+    
+    struct PokemonAbility: Codable {
+        let ability: AbilityName
+        let isHidden: Bool
+        let slot: Int
+        
+        enum CodingKeys: String, CodingKey {
+            case ability
+            case isHidden = "is_hidden"
+            case slot
+        }
+    }
+    
+    struct AbilityName: Codable {
         let name: String
     }
     
@@ -45,5 +63,17 @@ struct PokemonDetailsResponse: Codable {
             case frontDefault = "front_default"
             case frontShiny = "front_shiny"
         }
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case weight
+        case height
+        case types
+        case abilities
+        case stats
+        case sprites
+        case baseExperience = "base_experience"
     }
 }

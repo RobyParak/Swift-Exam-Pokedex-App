@@ -66,14 +66,15 @@ class PokemonStore: ObservableObject {
                     let (data, _) = try await URLSession.shared.data(for: urlRequest)
                     
                     let pokemonDetails = try JSONDecoder().decode(PokemonDetailsResponse.self, from: data)
-                    
+                    let abilityNames = pokemonDetails.abilities.map { $0.ability.name }
+
                     let pokemonModel = PokemonModel(
                         id: pokemonDetails.id,
                         name: pokemonDetails.name.capitalized,
                         imageUrl: pokemonDetails.sprites.frontDefault ??
                             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/\(pokemonDetails.id).png",
                         types: pokemonDetails.types.map { $0.type.name },
-                        abilities: [], // Add abilities parsing if needed
+                        abilities: abilityNames,
                         height: Double(pokemonDetails.height) / 10,
                         weight: Double(pokemonDetails.weight) / 10,
                         baseExperience: nil
