@@ -8,7 +8,7 @@ import SwiftUI
 struct MainPokemonPage: View {
     @EnvironmentObject var pokemonFavourites: PokemonFavourites
     @StateObject var vm: MainPokemonPageViewModel
-
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -27,13 +27,13 @@ struct MainPokemonPage: View {
                             }
                             .padding(.leading, 18)
                         }
-
+                        
                         TextField("Gen 1 Pokémon only", text: $vm.search)
                             .padding(.trailing, 12)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                     }
                     .padding(.top)
-
+                    
                     // Handle different states (Loading, Error, Success)
                     if vm.isLoading {
                         loadingStateView
@@ -47,14 +47,14 @@ struct MainPokemonPage: View {
                             } else {
                                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
                                     ForEach(vm.filteredPokemons, id: \.self) { pokemon in
-                                        NavigationLink(destination: PokemonDetailView(pokemon: pokemon)) {
+                                        NavigationLink(destination: PokemonDetailView(pokemon: pokemon, viewModel: PokemonViewModel())) {
                                             PokemonCell(pokemon: pokemon)
                                         }
                                     }
                                 }
                                 .padding()
                             }
-
+                            
                         case .failure(let error):
                             errorStateView(errorMessage: error.localizedDescription)
                         }
@@ -68,7 +68,7 @@ struct MainPokemonPage: View {
             .navigationBarTitleDisplayMode(.inline)
         }
     }
-
+    
     private var loadingStateView: some View {
         VStack {
             ProgressView("Loading Pokémon...")
@@ -80,7 +80,7 @@ struct MainPokemonPage: View {
                 .foregroundColor(.gray)
         }
     }
-
+    
     private func errorStateView(errorMessage: String) -> some View {
         VStack {
             Image(systemName: "exclamationmark.triangle.fill")

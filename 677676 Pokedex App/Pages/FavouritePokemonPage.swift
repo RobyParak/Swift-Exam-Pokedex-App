@@ -7,50 +7,47 @@ import SwiftUI
 struct FavouritePokemonPage: View {
     @EnvironmentObject var pokemonFavourites: PokemonFavourites
     @EnvironmentObject var pokemonStore: PokemonStore
-    @State private var searchText = ""
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack {
-                    
-                    // Content
                     if pokemonFavourites.favoriteIDs.isEmpty {
                         emptyStateView
                     } else {
-                        switch pokemonStore.pokemons {
-                        case .success(let allPokemons):
-                            let favoritePokemons = pokemonFavourites.favoriteIDs.compactMap { id in
-                                allPokemons.first { $0.id == id }
-                            }
-                            .sorted { $0.id < $1.id }
-                            .filter {
-                                searchText.isEmpty ||
-                                $0.name.lowercased().contains(searchText.lowercased()) ||
-                                String($0.id).contains(searchText)
-                            }
-                            
-                            if favoritePokemons.isEmpty {
-                                noResultsView
-                            } else {
-                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
-                                    ForEach(favoritePokemons, id: \.id) { pokemon in
-                                        NavigationLink(destination: PokemonDetailView(pokemon: pokemon)) {
-                                            PokemonCell(pokemon: pokemon)
-                                        }
-                                    }
-                                }
-                                .padding()
-                            }
-                            
-                        case .failure(let error):
-                            errorStateView(errorMessage: error.localizedDescription)
-                        }
+                        contentView
                     }
                 }
             }
-            .navigationTitle("Favorites")
+            .navigationTitle("Favourites")
             .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+    
+    @ViewBuilder
+    private var contentView: some View {
+        switch pokemonStore.pokemons {
+        case .success(let allPokemons):
+            let favoritePokemons = pokemonFavourites.favoriteIDs.compactMap { id in
+                allPokemons.first { $0.id == id }
+            }
+                .sorted { $0.id < $1.id }
+            
+            if favoritePokemons.isEmpty {
+                noResultsView
+            } else {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
+                    ForEach(favoritePokemons, id: \.id) { pokemon in
+                        NavigationLink(destination: PokemonDetailView(pokemon: pokemon, viewModel: PokemonViewModel())) {
+                            PokemonCell(pokemon: pokemon)
+                        }
+                    }
+                }
+                .padding()
+            }
+            
+        case .failure(let error):
+            errorStateView(errorMessage: error.localizedDescription)
         }
     }
     
